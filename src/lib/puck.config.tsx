@@ -306,7 +306,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         primaryThemeColor: "#2D4236",
         typographyPairing: "classic"
       },
-      render: ({ children, title, primaryThemeColor, typographyPairing }: any) => {
+      render: ({ children, primaryThemeColor, typographyPairing }: any) => {
         const { isLight, setIsLight } = useSiteContent();
         
         let fontDisplay = "Playfair Display, serif";
@@ -330,36 +330,42 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         } as React.CSSProperties;
 
         return (
-          <div className="flex flex-col lg:flex-row min-h-screen bg-bg-primary" style={customStyle}>
-             {/* MOBILE SIDEBAR/TOP BAR (Visible only on small screens if it has content) */}
-             <aside className="lg:hidden w-full border-b border-border-subtle flex flex-col p-6 pt-24 bg-bg-primary/95 backdrop-blur-md">
+          <div className="flex flex-col lg:flex-row min-h-screen items-stretch bg-bg-primary overflow-x-hidden" style={customStyle}>
+             {/* MOBILE SIDEBAR/TOP BAR */}
+             <aside className="lg:hidden w-full border-b border-border-subtle flex flex-col p-6 pt-24 bg-bg-primary/95 backdrop-blur-md sticky top-0 z-40">
               <div className="flex flex-col gap-y-4">
                 <DropZone zone="side" />
               </div>
             </aside>
 
-            {/* LEFT COLUMN: BRAND & SERVICES (Desktop) */}
-            <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:min-h-screen w-1/3 border-r border-border-subtle flex-col p-8 md:p-12 lg:p-16 pt-32 lg:pt-12 overflow-y-auto no-scrollbar bg-bg-primary">
-              <div className="flex flex-col flex-wrap lg:flex-nowrap gap-y-4">
-                <DropZone zone="side" />
-              </div>
-              
-              <div className="mt-auto pt-12 flex items-center gap-6">
-                <button 
-                  onClick={() => setIsLight(!isLight)}
-                  className="text-text-primary/40 hover:text-brick-copper transition-colors"
-                >
-                  {isLight ? <CloudMoon size={18} /> : <CloudSun size={18} />}
-                </button>
+            {/* LEFT COLUMN: BRAND & SERVICES (Desktop) - Container stretches to full height of parent flex */}
+            <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col bg-bg-primary relative shrink-0">
+              {/* Sticky wrapper for content - keeps content in view while parent aside stretches full height */}
+              <div className="sticky top-0 h-screen flex flex-col p-8 md:p-12 lg:p-16 pt-32 lg:pt-12 overflow-y-auto no-scrollbar w-full">
+                <div className="flex flex-col gap-y-8">
+                  <DropZone zone="side" />
+                </div>
+                
+                <div className="mt-auto pt-12 flex items-center gap-6">
+                  <button 
+                    onClick={() => setIsLight(!isLight)}
+                    className="text-text-primary/40 hover:text-brick-copper transition-colors p-2 hover:bg-white/5 rounded-full"
+                  >
+                    {isLight ? <CloudMoon size={18} /> : <CloudSun size={18} />}
+                  </button>
+                  <span className="text-[9px] uppercase tracking-widest text-text-primary/20">Site Narrative Engine</span>
+                </div>
               </div>
             </aside>
 
             {/* RIGHT COLUMN: MAIN CONTENT */}
-            <main className="flex-1 overflow-visible relative">
-              <div className="flex flex-wrap content-start">
+            <main className="flex-1 relative flex flex-col min-h-full">
+              <div className="flex flex-col flex-1">
                 <DropZone zone="main" />
+                <div className="flex flex-col">
+                  {children}
+                </div>
               </div>
-              {children}
             </main>
           </div>
         );

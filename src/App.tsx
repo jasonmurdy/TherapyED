@@ -38,11 +38,21 @@ function usePageTracking() {
   }, [location]);
 }
 
+function isPuckPopulated(layout: any) {
+  if (!layout) return false;
+  // Check if there is actual content or populated zones
+  const hasContent = layout.content && layout.content.length > 0;
+  const hasZones = layout.zones && Object.values(layout.zones).some(
+    (zone: any) => Array.isArray(zone) && zone.length > 0
+  );
+  return !!(hasContent || hasZones);
+}
+
 function MainLayout() {
   usePageTracking();
   const [showAdmin, setShowAdmin] = useState(false);
   const [showPuck, setShowPuck] = useState(false);
-  const { isAdmin, settings, isEditMode, setIsEditMode, pages, isLight, setIsLight } = useSiteContent();
+  const { isAdmin, settings, isEditMode, setIsEditMode, pages, isLight, setIsLight, loading } = useSiteContent();
 
   const location = useLocation();
   const slugFromPath = location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1] : null;
@@ -51,8 +61,10 @@ function MainLayout() {
   const config = useMemo(() => createConfig(pages), [pages]);
   
   // Check if we are on a page that uses a Puck layout
-  const hasPuckLayout = (location.pathname === '/' && settings.layout && (settings.layout.content?.length > 0 || settings.layout.zones)) || 
-                       (currentPage?.layout && (currentPage.layout.content?.length > 0 || currentPage.layout.zones));
+  const hasPuckLayout = useMemo(() => {
+    const layout = location.pathname === '/' ? settings.layout : currentPage?.layout;
+    return isPuckPopulated(layout);
+  }, [location.pathname, settings.layout, currentPage?.layout]);
 
   // Dynamic Theme Injection
   useEffect(() => {
@@ -94,6 +106,18 @@ function MainLayout() {
     }
   }, [location.pathname]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 90, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="w-12 h-12 border-2 border-brick-copper border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
   const renderContent = () => {
     return (
       <AnimatePresence mode="wait">
@@ -110,7 +134,7 @@ function MainLayout() {
   };
 
   return (
-    <div className={`${hasPuckLayout ? 'min-h-screen overflow-x-hidden' : 'flex flex-col lg:flex-row min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden'} bg-bg-primary text-text-primary selection:bg-brick-copper selection:text-charcoal relative transition-colors duration-500 ${isLight ? 'light' : ''}`}>
+    <div className={`min-h-screen overflow-x-hidden bg-bg-primary text-text-primary selection:bg-brick-copper selection:text-charcoal relative transition-colors duration-500 ${isLight ? 'light' : ''}`}>
       <Navbar theme={isLight ? 'light' : 'dark'} onThemeToggle={() => setIsLight(!isLight)} />
       <MobileNavbar theme={isLight ? 'light' : 'dark'} onThemeToggle={() => setIsLight(!isLight)} />
       
@@ -142,38 +166,43 @@ function MainLayout() {
         )}
         <button 
           onClick={() => setShowAdmin(true)}
-          className="p-4 bg-charcoal text-brick-copper rounded-full border border-brick-copper shadow-lg opacity-10 hover:opacity-100 transition-all"
+          className="p-4 bg-charcoal text-brick-copper rounded-full border border-brick-copper shadow-lg opacity-10 hover:opacity-100 transition-all font-sans"
         >
           <Shield size={20} />
         </button>
       </div>
 
-      {hasPuckLayout ? (
-        <div className="w-full">
-          {renderContent()}
-        </div>
-      ) : (
-        <>
-          {/* LEFT COLUMN: BRAND & SERVICES */}
-          <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col p-8 md:p-12 lg:p-16 pt-20 lg:pt-12 lg:overflow-y-auto no-scrollbar">
-            <BrandHeader theme={isLight ? 'light' : 'dark'} />
-            <div className="pt-12 space-y-16">
-              <Services />
-              <BookingForm />
-            </div>
-          </aside>
-
-          {/* RIGHT AREA: HERO, PORTFOLIO & BOOKING */}
-          <main className="w-full lg:w-2/3 flex flex-col lg:overflow-y-auto no-scrollbar scroll-smooth pt-20 lg:pt-0">
+      <div className="flex flex-col lg:flex-row min-h-screen items-stretch">
+        {hasPuckLayout ? (
+          <div className="w-full flex flex-col items-stretch">
             {renderContent()}
+          </div>
+        ) : (
+          <>
+            {/* LEFT COLUMN: BRAND & SERVICES (FALLBACK) */}
+            <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col bg-bg-primary relative shrink-0">
+              <div className="sticky top-0 h-screen flex flex-col p-8 md:p-12 lg:p-16 pt-32 lg:pt-12 no-scrollbar lg:overflow-y-auto">
+                <BrandHeader theme={isLight ? 'light' : 'dark'} />
+                <div className="pt-12 space-y-16">
+                  <Portfolio panel="side" />
+                  <Services />
+                  <BookingForm />
+                </div>
+              </div>
+            </aside>
 
-            {/* BOTTOM: BOOKING & FOOTER */}
-            <section className="mt-auto p-8 md:p-12 lg:p-16 border-t border-border-subtle bg-text-primary/[0.01]">
-              <FooterContent />
-            </section>
-          </main>
-        </>
-      )}
+            {/* RIGHT AREA: HERO, PORTFOLIO & BOOKING (FALLBACK) */}
+            <main className="w-full lg:w-2/3 flex flex-col pt-20 lg:pt-0 min-h-screen relative flex-1">
+              {renderContent()}
+
+              {/* BOTTOM: BOOKING & FOOTER */}
+              <section className="mt-auto p-8 md:p-12 lg:p-16 border-t border-border-subtle bg-text-primary/[0.01]">
+                <FooterContent />
+              </section>
+            </main>
+          </>
+        )}
+      </div>
       
       <ChatWidget />
     </div>
@@ -183,12 +212,12 @@ function MainLayout() {
 function HomeView({ config }: { config: any }) {
   const { settings } = useSiteContent();
   
-  if (settings.layout && (settings.layout.content?.length > 0 || settings.layout.zones)) {
+  if (isPuckPopulated(settings.layout)) {
     return <Render config={config} data={settings.layout} />;
   }
 
   return (
-    <section className="flex flex-col">
+    <section className="flex flex-col flex-1">
       <Helmet>
         <title>{settings.brandName} | Therapeutic Narratives & Personal Growth</title>
         <meta name="description" content={settings.tagline} />
@@ -211,7 +240,7 @@ function DynamicPageView({ config }: { config: any }) {
 
   if (!page) return <div className="p-16 text-center">Narrative space not found.</div>;
 
-  const hasPuck = page.layout && (page.layout.content?.length > 0 || page.layout.zones);
+  const hasPuck = isPuckPopulated(page.layout);
 
   return (
     <div className="flex flex-col w-full min-h-screen">
@@ -229,7 +258,7 @@ function DynamicPageView({ config }: { config: any }) {
         </div>
       )}
 
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
         {hasPuck ? (
           <Render config={config} data={page.layout} />
         ) : (
