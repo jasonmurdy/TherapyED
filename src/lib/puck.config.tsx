@@ -16,6 +16,8 @@ import { LogoCloud, InstagramFeed } from "../components/SocialNodes";
 import { LinkButton } from "../components/LinkButton";
 import { useSiteContent } from "./SiteContentContext";
 import { CloudMoon, CloudSun } from "lucide-react";
+import { CustomPaddingField, CustomColorField, ConstrainedTypographyField } from "./PuckCustomFields";
+import { FirebaseImageField } from "./FirebaseImageField";
 
 const InlineHTML = ({ html, height }: { html: string, height?: number }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -213,6 +215,15 @@ export type PuckConfig = {
     paddingTop?: number;
     paddingBottom?: number;
   };
+  FeatureSection: {
+    imageOnLeft: boolean;
+    imageUrl: string;
+    title: string;
+    description: string;
+    backgroundColor: string;
+    paddingTop?: number;
+    paddingBottom?: number;
+  };
 };
 
 export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
@@ -273,11 +284,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     ]
   };
 
-  const PaddingField = {
-    type: "number" as const,
-    min: 0,
-    max: 200,
-  };
+  const PaddingField = CustomPaddingField;
 
   const ComponentWrapper = ({ width, children }: { width?: "full" | "half", children: React.ReactNode }) => {
     return (
@@ -289,10 +296,41 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
   
   return {
     root: {
-      render: ({ children }) => {
+      fields: {
+        title: { type: "text" },
+        primaryThemeColor: CustomColorField as any,
+        typographyPairing: ConstrainedTypographyField as any,
+      },
+      defaultProps: {
+        title: "Home",
+        primaryThemeColor: "#2D4236",
+        typographyPairing: "classic"
+      },
+      render: ({ children, title, primaryThemeColor, typographyPairing }: any) => {
         const { isLight, setIsLight } = useSiteContent();
+        
+        let fontDisplay = "Playfair Display, serif";
+        let fontBody = "Inter, sans-serif";
+        if (typographyPairing === "modern") {
+          fontDisplay = "Montserrat, sans-serif";
+          fontBody = "Open Sans, sans-serif";
+        } else if (typographyPairing === "editorial") {
+          fontDisplay = "Prata, serif";
+          fontBody = "Lora, serif";
+        } else if (typographyPairing === "minimalist") {
+          fontDisplay = "Inter, sans-serif";
+          fontBody = "Inter, sans-serif";
+        }
+
+        const customStyle: React.CSSProperties = {
+          '--color-primary': primaryThemeColor,
+          '--color-accent': primaryThemeColor,
+          '--font-display-custom': fontDisplay,
+          '--font-body-custom': fontBody,
+        } as React.CSSProperties;
+
         return (
-          <div className="flex flex-col lg:flex-row min-h-screen bg-bg-primary overflow-x-hidden">
+          <div className="flex flex-col lg:flex-row min-h-screen bg-bg-primary overflow-x-hidden" style={customStyle}>
              {/* MOBILE SIDEBAR/TOP BAR (Visible only on small screens if it has content) */}
              <aside className="lg:hidden w-full border-b border-border-subtle flex flex-col p-6 pt-24 bg-bg-primary/95 backdrop-blur-md">
               <div className="flex flex-col gap-y-4">
@@ -370,21 +408,9 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
       Section: {
         fields: {
           children: { type: "slot" },
-          paddingTop: {
-            type: "number",
-            min: 0,
-            max: 400
-          },
-          paddingBottom: {
-            type: "number",
-            min: 0,
-            max: 400
-          },
-          paddingX: {
-            type: "number",
-            min: 0,
-            max: 400
-          },
+          paddingTop: PaddingField as any,
+          paddingBottom: PaddingField as any,
+          paddingX: PaddingField as any,
           background: {
             type: "select",
             options: [
@@ -394,9 +420,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
               { label: "Custom Color", value: "custom" },
             ],
           },
-          backgroundColor: {
-            type: "text"
-          }
+          backgroundColor: CustomColorField as any
         },
         defaultProps: {
           paddingTop: 80,
@@ -404,8 +428,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
           paddingX: 16,
           background: "primary",
         },
-        render: ({ children, paddingTop, paddingBottom, paddingX, background = "primary", backgroundColor }) => {
-          const Children = children as React.ElementType;
+        render: ({ paddingTop, paddingBottom, paddingX, background = "primary", backgroundColor }) => {
           const bgClass = {
             primary: "bg-bg-primary",
             secondary: "bg-bg-secondary",
@@ -430,7 +453,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
 
           return (
             <section className={`${bgClass} transition-all duration-300`} style={style}>
-              <div className="max-w-7xl mx-auto">{Children && <Children />}</div>
+              <div className="max-w-7xl mx-auto"><DropZone zone="children" /></div>
             </section>
           );
         },
@@ -450,20 +473,18 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         leftColumnWidth: 50,
         gap: 32,
       },
-      render: ({ left, right, leftColumnWidth, gap }) => {
-        const Left = left as React.ElementType;
-        const Right = right as React.ElementType;
+      render: ({ leftColumnWidth, gap }) => {
         return (
           <div className="flex flex-col md:grid" style={{ gap: `${gap}px`, gridTemplateColumns: `${leftColumnWidth}% ${100 - leftColumnWidth}%` }}>
-            <div className="w-full">{Left && <Left />}</div>
-            <div className="w-full">{Right && <Right />}</div>
+            <div className="w-full"><DropZone zone="left" /></div>
+            <div className="w-full"><DropZone zone="right" /></div>
           </div>
         );
       },
     },
     Heading: {
       fields: {
-        text: { type: "text" },
+        text: { type: "text", contentEditable: true },
         level: {
           type: "select",
           options: [
@@ -538,7 +559,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     RichText: {
       fields: {
-        content: { type: "textarea" },
+        content: { type: "textarea", contentEditable: true },
         size: {
           type: "select",
           options: [
@@ -599,7 +620,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     Hero: {
       fields: {
-        imageUrl: { type: "text" },
+        imageUrl: FirebaseImageField as any,
         height: {
           type: "select",
           options: [
@@ -652,10 +673,10 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     TextContent: {
       fields: {
-        title1: { type: "text" },
-        title2: { type: "text" },
+        title1: { type: "text", contentEditable: true },
+        title2: { type: "text", contentEditable: true },
         accent: { type: "text" },
-        tagline: { type: "text" },
+        tagline: { type: "text", contentEditable: true },
         width: WidthField as any,
       },
       defaultProps: {
@@ -724,14 +745,14 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
             { label: "Manual (Custom)", value: "manual" },
           ],
         },
-        title: { type: "text" },
-        subtitle: { type: "text" },
+        title: { type: "text", contentEditable: true },
+        subtitle: { type: "text", contentEditable: true },
         items: {
           type: "array",
           arrayFields: {
-            title: { type: "text" },
+            title: { type: "text", contentEditable: true },
             price: { type: "text" },
-            description: { type: "textarea" },
+            description: { type: "textarea", contentEditable: true },
             url: { type: "text" },
           },
         },
@@ -764,8 +785,8 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     Contact: {
       fields: {
-        title: { type: "text" },
-        description: { type: "text" },
+        title: { type: "text", contentEditable: true },
+        description: { type: "text", contentEditable: true },
         width: WidthField as any,
         paddingTop: PaddingField as any,
         paddingBottom: PaddingField as any,
@@ -787,7 +808,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     Footer: {
       fields: {
-        quote: { type: "text" },
+        quote: { type: "text", contentEditable: true },
         width: WidthField as any,
         paddingTop: PaddingField as any,
         paddingBottom: PaddingField as any,
@@ -1053,6 +1074,47 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
           <ComponentWrapper width={width}>
             {content}
           </ComponentWrapper>
+        );
+      }
+    },
+    FeatureSection: {
+      fields: {
+        imageOnLeft: {
+          type: "radio",
+          options: [
+            { label: "Image on Left", value: true },
+            { label: "Image on Right", value: false }
+          ]
+        },
+        imageUrl: FirebaseImageField as any,
+        title: { type: "text", contentEditable: true },
+        description: { type: "textarea", contentEditable: true },
+        backgroundColor: CustomColorField as any,
+        paddingTop: PaddingField as any,
+        paddingBottom: PaddingField as any,
+      },
+      defaultProps: {
+        imageOnLeft: true,
+        imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800",
+        title: "Stunning Architecture",
+        description: "Experience modern living with bespoke design.",
+        backgroundColor: "#ffffff",
+        paddingTop: 64,
+        paddingBottom: 64,
+      },
+      render: ({ imageOnLeft, imageUrl, title, description, backgroundColor, paddingTop, paddingBottom }) => {
+        return (
+          <div style={{ backgroundColor, paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }}>
+            <div className={`max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-8 items-center ${imageOnLeft ? "" : "md:flex-row-reverse"}`}>
+              <div className="w-full md:w-1/2">
+                <img src={imageUrl} alt="Feature visual" className="w-full aspect-[4/3] object-cover rounded-lg shadow-lg" />
+              </div>
+              <div className="w-full md:w-1/2 flex flex-col gap-4">
+                <h3 className="text-3xl font-display text-text-primary">{title}</h3>
+                <p className="text-text-primary/70 leading-relaxed text-lg">{description}</p>
+              </div>
+            </div>
+          </div>
         );
       }
     }
