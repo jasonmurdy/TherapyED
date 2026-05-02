@@ -1,0 +1,238 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true && (
+          request.auth.token.email == 'jasonmurdy@gmail.com' || 
+          request.auth.token.email == 'sherwin.131986@gmail.com' ||
+          request.auth.token.email == 'therapywithedward@gmail.com' ||
+          exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+        ))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. Validation Blueprints
+    function isValidPortfolioItem(data) {
+      return data.title is string && data.title.size() <= 500
+        && data.category is string && data.category.size() <= 200
+        && data.img is string && data.img.size() <= 5000
+        && (data.get('url', null) == null || (data.url is string && data.url.size() <= 500))
+        && (data.get('description', null) == null || (data.description is string && data.description.size() <= 10000))
+        && (data.get('gallery', null) == null || (data.gallery is list && data.gallery.size() <= 50))
+        && (data.get('mlsNumber', null) == null || (data.mlsNumber is string && data.mlsNumber.size() <= 200))
+        && (data.get('listPrice', null) == null || (data.listPrice is string && data.listPrice.size() <= 100))
+        && (data.get('propertyType', null) == null || (data.propertyType is string && data.propertyType.size() <= 300))
+        && (data.get('beds', null) == null || (data.beds is number))
+        && (data.get('baths', null) == null || (data.baths is number))
+        && (data.get('sqft', null) == null || (data.sqft is number))
+        && (data.get('status', null) == null || (data.status is string && data.status.size() <= 100))
+        && (data.get('daysOnMarket', null) == null || (data.daysOnMarket is number))
+        && (data.get('colSpan', null) == null || (data.colSpan is number))
+        && (data.get('rowSpan', null) == null || (data.rowSpan is number))
+        && (data.get('hidden', null) == null || (data.hidden is bool))
+        && (data.get('bannerText', null) == null || (data.bannerText is string && data.bannerText.size() <= 100))
+        && (data.get('bannerColor', null) == null || (data.bannerColor is string && data.bannerColor.size() <= 100))
+        && (data.get('bannerSize', null) == null || (data.bannerSize is string && data.bannerSize.size() <= 50))
+        && (data.get('type', null) == null || (data.type is string && (data.type == 'item' || data.type == 'spacer')))
+        && (data.get('panel', null) == null || (data.panel is string && (data.panel == 'main' || data.panel == 'side')))
+        && data.order is number;
+    }
+
+    function isValidService(data) {
+      return data.title is string && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 2000
+        && (data.get('price', null) == null || (data.price is string && data.price.size() <= 100))
+        && (data.get('url', null) == null || (data.url is string && data.url.size() <= 500))
+        && data.order is number;
+    }
+
+    function isValidInquiry(data) {
+      return data.propertyAddress is string && data.propertyAddress.size() <= 500
+        && data.realtorName is string && data.realtorName.size() <= 200
+        && (data.get('email', null) == null || (data.email is string && data.email.size() <= 200))
+        && data.serviceType is string && data.serviceType.size() <= 200;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.brandName is string && data.brandName.size() <= 100
+        && (data.get('logoText', null) == null || (data.logoText is string && data.logoText.size() <= 200))
+        && (data.get('heroTitlePart1', null) == null || (data.heroTitlePart1 is string && data.heroTitlePart1.size() <= 200))
+        && (data.get('heroTitlePart2', null) == null || (data.heroTitlePart2 is string && data.heroTitlePart2.size() <= 200))
+        && (data.get('heroTitleAccent', null) == null || (data.heroTitleAccent is string && data.heroTitleAccent.size() <= 100))
+        && (data.get('tagline', null) == null || (data.tagline is string && data.tagline.size() <= 500))
+        && (data.get('logoLight', null) == null || (data.logoLight is string && data.logoLight.size() <= 1000))
+        && (data.get('logoDark', null) == null || (data.logoDark is string && data.logoDark.size() <= 1000))
+        && (data.get('heroImage', null) == null || (data.heroImage is string && data.heroImage.size() <= 1000))
+        && (data.get('heroAlignment', null) == null || (data.heroAlignment is string && (data.heroAlignment == 'left' || data.heroAlignment == 'center')))
+        && (data.get('homeSectionsOrder', null) == null || (data.homeSectionsOrder is list && data.homeSectionsOrder.size() <= 10))
+        && (data.get('navigationItems', null) == null || (data.navigationItems is list && data.navigationItems.size() <= 10))
+        && (data.get('socialLinks', null) == null || (data.socialLinks is list && data.socialLinks.size() <= 10))
+        && (data.get('contactInfo', null) == null || (data.contactInfo is map))
+        && (data.get('servicesTitle', null) == null || (data.servicesTitle is string && data.servicesTitle.size() <= 200))
+        && (data.get('servicesSubtitle', null) == null || (data.servicesSubtitle is string && data.servicesSubtitle.size() <= 500))
+        && (data.get('footerQuote', null) == null || (data.footerQuote is string && data.footerQuote.size() <= 500))
+        && (data.get('inquiryTitle', null) == null || (data.inquiryTitle is string && data.inquiryTitle.size() <= 200))
+        && (data.get('accentColor', null) == null || (data.accentColor is string && data.accentColor.size() <= 20))
+        && (data.get('fontTitle', null) == null || (data.fontTitle is string && data.fontTitle.size() <= 100))
+        && (data.get('fontBody', null) == null || (data.fontBody is string && data.fontBody.size() <= 100))
+        && (data.get('layout', null) == null || (data.layout is map));
+    }
+
+    function isValidChat(data) {
+      return data.prompt is string && data.prompt.size() <= 10000
+        && (data.get('displayPrompt', null) == null || (data.displayPrompt is string && data.displayPrompt.size() <= 5000))
+        && (data.get('response', null) == null || (data.response is string && data.response.size() <= 20000));
+    }
+
+    function isValidPage(data) {
+      return data.title is string && data.title.size() <= 200
+        && data.slug is string && data.slug.size() <= 100
+        && (data.get('description', null) == null || (data.description is string && data.description.size() <= 1000))
+        && (data.get('layout', null) == null || (data.layout is map));
+    }
+
+    function isValidTestimonial(data) {
+      return data.name is string && data.name.size() <= 200
+        && data.brokerage is string && data.brokerage.size() <= 200
+        && data.quote is string && data.quote.size() <= 2000
+        && data.headshotUrl is string && data.headshotUrl.size() <= 500
+        && data.order is number;
+    }
+
+    function isValidAdmin(data) {
+      return data.email is string && data.email.size() <= 200
+        && data.role is string && (data.role == 'owner' || data.role == 'admin')
+        && data.addedAt == request.time;
+    }
+
+    // 3. Collection Rules
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidAdmin(incoming()) && isValidId(adminId)
+        && incoming().keys().hasAll(['email', 'role', 'addedAt'])
+        && incoming().keys().size() == 3;
+      allow update: if isAdmin() && isValidAdmin(incoming())
+        && incoming().addedAt == existing().addedAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role']);
+      allow delete: if isAdmin() && adminId != request.auth.token.email; // Cannot delete self
+    }
+
+    match /portfolio_items/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPortfolioItem(incoming()) && isValidId(itemId)
+        && incoming().keys().hasAll(['title', 'category', 'img', 'order', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() 
+        && isValidPortfolioItem(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'img', 'description', 'gallery', 'order', 'url', 'mlsNumber', 'listPrice', 'propertyType', 'beds', 'baths', 'sqft', 'status', 'daysOnMarket', 'colSpan', 'rowSpan', 'type', 'panel', 'hidden', 'bannerText', 'bannerColor', 'bannerSize', 'updatedAt'])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidService(incoming()) && isValidId(serviceId)
+        && incoming().keys().hasAll(['title', 'description', 'order', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidService(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'price', 'url', 'order', 'updatedAt'])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /inquiries/{inquiryId} {
+      allow create: if isValidInquiry(incoming()) && isValidId(inquiryId)
+        && incoming().keys().hasAll(['propertyAddress', 'realtorName', 'serviceType', 'createdAt'])
+        && incoming().createdAt == request.time;
+      allow read, delete: if isAdmin();
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTestimonial(incoming()) && isValidId(testimonialId)
+        && incoming().keys().hasAll(['name', 'brokerage', 'quote', 'headshotUrl', 'order', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidTestimonial(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'brokerage', 'quote', 'headshotUrl', 'order', 'updatedAt'])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSiteSettings(incoming())
+        && (request.method == 'create' ? incoming().keys().hasAll(['brandName', 'updatedAt']) : true)
+        && incoming().updatedAt == request.time;
+    }
+
+    match /pages/{pageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPage(incoming()) && isValidId(pageId)
+        && incoming().keys().hasAll(['title', 'slug', 'content', 'showInNav', 'order', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() 
+        && isValidPage(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'slug', 'content', 'showInNav', 'order', 'description', 'layout', 'updatedAt'])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId}/chats/{chatId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidChat(incoming())
+        && incoming().keys().hasAll(['prompt', 'createTime'])
+        && incoming().createTime == request.time;
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidChat(incoming())
+        && incoming().createTime == existing().createTime
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['response'])
+        );
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

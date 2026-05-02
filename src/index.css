@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Prata&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Open+Sans:wght@300;400;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+@theme {
+  --font-display: var(--font-display-custom, "Playfair Display", serif);
+  --font-body: var(--font-body-custom, "Inter", sans-serif);
+  
+  --color-charcoal: #1C1C1C;
+  --color-off-white: #F5F5F5;
+  --color-sand: #CBBB8D;
+  --color-primary: var(--color-primary, #2D4236);
+  --color-secondary: var(--color-secondary, #7A827E);
+  --color-brick-copper: var(--color-accent, #B06C4D);
+
+  /* Semantic Theme Variables */
+  --color-bg-primary: var(--bg-primary);
+  --color-text-primary: var(--text-primary);
+  --color-border-subtle: var(--border-subtle);
+  --color-glass-bg: var(--glass-bg);
+
+  --radius-ui: var(--ui-radius, 8px);
+}
+
+:root {
+  --bg-primary: #FCFAFA;
+  --text-primary: #2C3E50;
+  --border-subtle: rgba(44, 62, 80, 0.1);
+  --glass-bg: rgba(252, 250, 250, 0.8);
+  --color-accent: #5B7A70;
+  --ui-radius: 12px;
+}
+
+.light {
+  --bg-primary: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+}
+
+.dark {
+  --bg-primary: #121A1A;
+  --text-primary: #E0E0E0;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(18, 26, 26, 0.9);
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary font-body transition-colors duration-500 overflow-x-hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Sharpen all headings and paragraphs for better visibility */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-semibold;
+  }
+
+  p, span {
+    @apply leading-relaxed;
+  }
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+}
+
+.puck-container {
+  --bg-primary: inherit;
+  --text-primary: inherit;
+  --border-subtle: inherit;
+  --glass-bg: inherit;
+  --color-accent: inherit;
+  /* Prevent ResizeObserver loop error in some browsers */
+  overflow: hidden;
+  height: 100%;
+}
+
+.font-serif {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Hide scrollbar for the main layout containers if needed, but allow scroll within content */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
