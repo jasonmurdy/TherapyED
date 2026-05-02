@@ -330,7 +330,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         } as React.CSSProperties;
 
         return (
-          <div className="flex flex-col lg:flex-row min-h-screen bg-bg-primary overflow-x-hidden" style={customStyle}>
+          <div className="flex flex-col lg:flex-row min-h-screen bg-bg-primary" style={customStyle}>
              {/* MOBILE SIDEBAR/TOP BAR (Visible only on small screens if it has content) */}
              <aside className="lg:hidden w-full border-b border-border-subtle flex flex-col p-6 pt-24 bg-bg-primary/95 backdrop-blur-md">
               <div className="flex flex-col gap-y-4">
@@ -355,7 +355,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
             </aside>
 
             {/* RIGHT COLUMN: MAIN CONTENT */}
-            <main className="flex-1 overflow-x-hidden relative">
+            <main className="flex-1 overflow-visible relative">
               <div className="flex flex-wrap content-start">
                 <DropZone zone="main" />
               </div>
