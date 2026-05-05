@@ -69,8 +69,20 @@ function MainLayout() {
   // Dynamic Theme Injection
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.backgroundColor) root.style.setProperty('--bg-primary', settings.backgroundColor);
-    if (settings.textColor) root.style.setProperty('--text-primary', settings.textColor);
+    
+    // If in dark mode, we prefer the .dark class variables unless specifically overridden?
+    // Actually, let's only apply color settings if they differ from the basic light defaults 
+    // AND the user is in light mode. Or better: use data-theme for more specificity.
+    
+    if (isLight) {
+      if (settings.backgroundColor) root.style.setProperty('--bg-primary', settings.backgroundColor);
+      if (settings.textColor) root.style.setProperty('--text-primary', settings.textColor);
+    } else {
+      // In dark mode, we clear these specific light-mode overrides to allow .dark class to work
+      root.style.removeProperty('--bg-primary');
+      root.style.removeProperty('--text-primary');
+    }
+
     if (settings.primaryColor) root.style.setProperty('--color-primary', settings.primaryColor);
     if (settings.secondaryColor) root.style.setProperty('--color-secondary', settings.secondaryColor);
     if (settings.accentColor) root.style.setProperty('--color-accent', settings.accentColor);
@@ -84,7 +96,7 @@ function MainLayout() {
     // Fonts
     if (settings.fontTitle) root.style.setProperty('--font-display-custom', settings.fontTitle);
     if (settings.fontBody) root.style.setProperty('--font-body-custom', settings.fontTitle);
-  }, [settings]);
+  }, [settings, isLight]);
 
   useEffect(() => {
     // Hidden keyboard shortcut to open admin: Shift + A
@@ -120,16 +132,14 @@ function MainLayout() {
 
   const renderContent = () => {
     return (
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<HomeView config={config} />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/inquiry" element={<InquiryPage />} />
-          <Route path="/p/:slug" element={<DynamicPageView config={config} />} />
-          <Route path="/listing/:id" element={<ProjectDetailView />} />
-        </Routes>
-      </AnimatePresence>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<HomeView config={config} />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/inquiry" element={<InquiryPage />} />
+        <Route path="/p/:slug" element={<DynamicPageView config={config} />} />
+        <Route path="/listing/:id" element={<ProjectDetailView />} />
+      </Routes>
     );
   };
 
@@ -173,35 +183,37 @@ function MainLayout() {
       </div>
 
       <div className="flex flex-col lg:flex-row min-h-screen items-stretch">
-        {hasPuckLayout ? (
-          <div className="w-full flex flex-col items-stretch">
-            {renderContent()}
-          </div>
-        ) : (
-          <>
-            {/* LEFT COLUMN: BRAND & SERVICES (FALLBACK) */}
-            <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col bg-bg-primary relative shrink-0">
-              <div className="sticky top-0 h-screen flex flex-col p-8 md:p-12 lg:p-16 pt-32 lg:pt-12 no-scrollbar lg:overflow-y-auto">
-                <BrandHeader theme={isLight ? 'light' : 'dark'} />
-                <div className="pt-12 space-y-16">
-                  <Portfolio panel="side" />
-                  <Services />
-                  <BookingForm />
-                </div>
+        {!hasPuckLayout && (
+          <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col bg-bg-primary shrink-0 min-h-screen">
+            <div className="sticky top-0 h-screen flex-1 flex flex-col p-8 md:p-12 lg:p-16 pt-24 lg:pt-24 no-scrollbar lg:overflow-y-auto">
+              <BrandHeader theme={isLight ? 'light' : 'dark'} />
+              <div className="pt-12 space-y-16 pb-12">
+                <Portfolio panel="side" />
+                <Services />
+                <BookingForm />
               </div>
-            </aside>
-
-            {/* RIGHT AREA: HERO, PORTFOLIO & BOOKING (FALLBACK) */}
-            <main className="w-full lg:w-2/3 flex flex-col pt-20 lg:pt-0 min-h-screen relative flex-1">
-              {renderContent()}
-
-              {/* BOTTOM: BOOKING & FOOTER */}
-              <section className="mt-auto p-8 md:p-12 lg:p-16 border-t border-border-subtle bg-text-primary/[0.01]">
-                <FooterContent />
-              </section>
-            </main>
-          </>
+            </div>
+          </aside>
         )}
+
+        <main className={`${hasPuckLayout ? 'w-full' : 'w-full lg:w-2/3'} flex flex-col pt-24 lg:pt-24 min-h-screen relative flex-1`}>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<HomeView config={config} />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/inquiry" element={<InquiryPage />} />
+              <Route path="/p/:slug" element={<DynamicPageView config={config} />} />
+              <Route path="/listing/:id" element={<ProjectDetailView />} />
+            </Routes>
+          </AnimatePresence>
+
+          {!hasPuckLayout && (
+            <section className="mt-auto p-8 md:p-12 lg:p-16 border-t border-border-subtle bg-text-primary/[0.01]">
+              <FooterContent />
+            </section>
+          )}
+        </main>
       </div>
       
       <ChatWidget />
@@ -211,24 +223,34 @@ function MainLayout() {
 
 function HomeView({ config }: { config: any }) {
   const { settings } = useSiteContent();
+  const hasPuck = isPuckPopulated(settings.layout);
   
-  if (isPuckPopulated(settings.layout)) {
-    return <Render config={config} data={settings.layout} />;
-  }
+  // Extract meta from Puck layout if present
+  const puckMeta = settings.layout?.root || {};
+  const pageTitle = puckMeta.title ? `${puckMeta.title} | ${settings.brandName}` : `${settings.brandName} | Therapeutic Narratives & Personal Growth`;
+  const pageDesc = puckMeta.description || settings.tagline;
 
   return (
     <section className="flex flex-col flex-1">
       <Helmet>
-        <title>{settings.brandName} | Therapeutic Narratives & Personal Growth</title>
-        <meta name="description" content={settings.tagline} />
-        <meta property="og:title" content={`${settings.brandName} | Therapeutic Space`} />
-        <meta property="og:description" content={settings.tagline} />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        {puckMeta.ogImage && <meta property="og:image" content={puckMeta.ogImage} />}
         <meta property="og:type" content="website" />
       </Helmet>
-      <HeroVisual />
-      <div className="bg-bg-primary/50">
-        <Portfolio key="portfolio" />
-      </div>
+      
+      {hasPuck ? (
+        <Render config={config} data={settings.layout} />
+      ) : (
+        <>
+          <HeroVisual />
+          <div className="bg-bg-primary/50">
+            <Portfolio key="portfolio" />
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -242,12 +264,17 @@ function DynamicPageView({ config }: { config: any }) {
 
   const hasPuck = isPuckPopulated(page.layout);
 
+  const pageMeta = page.layout?.root || {};
+  const pageTitle = pageMeta.title ? `${pageMeta.title} | ${settings.brandName}` : `${page.title} | ${settings.brandName}`;
+  const pageDesc = pageMeta.description || page.content?.substring(0, 160).replace(/[#*`]/g, '') || `Exploring ${page.title} with ${settings.brandName}.`;
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       <Helmet>
-        <title>{`${page.title} | ${settings.brandName}`}</title>
-        <meta name="description" content={page.content?.substring(0, 160).replace(/[#*`]/g, '') || `Exploring ${page.title} with ${settings.brandName}.`} />
-        <meta property="og:title" content={`${page.title} | ${settings.brandName}`} />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <meta property="og:title" content={pageTitle} />
+        {pageMeta.ogImage && <meta property="og:image" content={pageMeta.ogImage} />}
       </Helmet>
       
       {!hasPuck && (

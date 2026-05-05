@@ -68,14 +68,16 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.light {
+html.light {
   --bg-primary: #FFFFFF;
   --text-primary: #1A1A1A;
   --border-subtle: rgba(0, 0, 0, 0.05);
   --glass-bg: rgba(255, 255, 255, 0.9);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
-.dark {
+html.dark {
   --bg-primary: #121A1A;
   --text-primary: #E0E0E0;
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -98,11 +100,6 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -115,7 +112,7 @@
 
 @layer base {
   body {
-    @apply font-body transition-colors duration-500 overflow-x-hidden bg-background text-foreground;
+    @apply font-body transition-colors duration-500 overflow-x-hidden bg-bg-primary text-text-primary;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;

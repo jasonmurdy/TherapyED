@@ -7,18 +7,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 export const CustomPaddingField = {
   type: "custom" as const,
   render: ({ name, value, onChange }: any) => {
+    const [localValue, setLocalValue] = useState(value || 0);
+
+    // Sync with external value when it changes outside
+    React.useEffect(() => {
+      if (value !== undefined && value !== localValue) {
+        setLocalValue(value);
+      }
+    }, [value]);
+
     return (
       <div className="flex flex-col gap-2">
         <Label className="text-xs uppercase text-gray-500 font-semibold tracking-wider">Padding {name}</Label>
         <div className="flex items-center gap-4">
           <Slider 
-            value={[value || 0]} 
+            value={[localValue]} 
             max={400} 
             step={8} 
-            onValueChange={(vals) => onChange(vals[0])} 
+            onValueChange={(vals) => {
+              setLocalValue(vals[0]);
+              onChange(vals[0]);
+            }} 
             className="flex-1"
           />
-          <span className="text-xs text-gray-300 w-8">{value || 0}px</span>
+          <span className="text-xs text-gray-300 w-10 text-right">{localValue}px</span>
         </div>
       </div>
     );

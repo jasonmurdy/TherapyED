@@ -44,32 +44,8 @@ try {
 
 export const storage = storageInstance;
 
-export interface FirestoreErrorInfo {
-  error: string;
-  operationType: 'create' | 'update' | 'delete' | 'list' | 'get' | 'write';
-  path: string | null;
-  authInfo: {
-    userId: string | null;
-    email: string | null;
-    emailVerified: boolean;
-    isAnonymous: boolean;
-    providerInfo: any[];
-  }
-}
+import { handleFirestoreError as handleFirestoreErrorFull, OperationType } from './firestoreError';
 
-export function handleFirestoreError(error: any, operationType: FirestoreErrorInfo['operationType'], path: string | null = null): never {
-  const user = auth.currentUser;
-  const errorInfo: FirestoreErrorInfo = {
-    error: error.message || String(error),
-    operationType,
-    path,
-    authInfo: {
-      userId: user?.uid || null,
-      email: user?.email || null,
-      emailVerified: user?.emailVerified || false,
-      isAnonymous: user?.isAnonymous || false,
-      providerInfo: user?.providerData || [],
-    }
-  };
-  throw new Error(JSON.stringify(errorInfo));
+export function handleFirestoreError(error: any, operationType: any, path: string | null = null): never {
+  return handleFirestoreErrorFull(error, operationType as any, path) as never;
 }

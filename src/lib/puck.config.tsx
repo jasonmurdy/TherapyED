@@ -3,21 +3,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { MoveUpRight } from "lucide-react";
 import { Config, DropZone } from "@measured/puck";
+import { Helmet } from "react-helmet-async";
+import { MessageSquare, MoveUpRight, CloudMoon, CloudSun, ChevronDown, Check, X, Star, Zap, Shield, Target, Award, Users, Heart, Camera, Film, Layout, Type, Layers, Box, Maximize, MousePointer2 } from "lucide-react";
 import { HeroVisual, BrandHeader } from "../components/Hero";
 import { Portfolio, Services } from "../components/PortfolioSections";
 import { BookingForm, FooterContent } from "../components/BookingAndFooter";
 import { TestimonialCarousel } from "../components/TestimonialCarousel";
 import { PropertyHighlight, TourEmbed } from "../components/PropertyFeatures";
 import { LogoCloud, InstagramFeed } from "../components/SocialNodes";
+import { ChatWidget } from "../components/ChatWidget";
 import { LinkButton } from "../components/LinkButton";
 import { useSiteContent } from "./SiteContentContext";
-import { CloudMoon, CloudSun } from "lucide-react";
 import { CustomPaddingField, CustomColorField, ConstrainedTypographyField } from "./PuckCustomFields";
 import { FirebaseImageField } from "./FirebaseImageField";
+import { motion, AnimatePresence } from "motion/react";
+
+const IconMap = {
+  MessageSquare, MoveUpRight, CloudMoon, CloudSun, ChevronDown, Check, X, Star, Zap, Shield, Target, Award, Users, Heart, Camera, Film, Layout, Type, Layers, Box, Maximize, MousePointer2
+};
 
 const InlineHTML = ({ html, height }: { html: string, height?: number }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,14 +31,19 @@ const InlineHTML = ({ html, height }: { html: string, height?: number }) => {
   useEffect(() => {
     if (!containerRef.current) return;
     
-    // Clear and set HTML
+    // Clear and set HTML content
     containerRef.current.innerHTML = html;
     
     // Find all scripts inside the injected HTML
     const scripts = Array.from(containerRef.current.querySelectorAll('script'));
     
-    // Re-create and append scripts to force execution
-    scripts.forEach(oldScript => {
+    if (scripts.length === 0) return;
+
+    // Helper to load scripts sequentially
+    const loadScript = (index: number) => {
+      if (index >= scripts.length) return;
+      
+      const oldScript = scripts[index];
       const newScript = document.createElement('script');
       
       // Copy attributes
@@ -40,14 +51,19 @@ const InlineHTML = ({ html, height }: { html: string, height?: number }) => {
         newScript.setAttribute(attr.name, attr.value);
       });
       
-      // Copy content if inline
-      if (oldScript.innerHTML) {
-        newScript.innerHTML = oldScript.innerHTML;
+      // Handle inline vs external scripts
+      if (oldScript.src) {
+        newScript.onload = () => loadScript(index + 1);
+        newScript.onerror = () => loadScript(index + 1);
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
+      } else {
+        newScript.textContent = oldScript.textContent;
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
+        loadScript(index + 1);
       }
-      
-      // Replace old script with new one
-      oldScript.parentNode?.replaceChild(newScript, oldScript);
-    });
+    };
+
+    loadScript(0);
   }, [html]);
 
   return (
@@ -59,20 +75,62 @@ const InlineHTML = ({ html, height }: { html: string, height?: number }) => {
   );
 };
 
-export type PuckConfig = {
+export type RootProps = {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  primaryThemeColor: string;
+  typographyPairing: "classic" | "modern" | "editorial" | "minimalist";
+};
+
+export type PuckConfigProps = {
   Section: {
     paddingTop: number;
     paddingBottom: number;
     paddingX: number;
-    background: "primary" | "secondary" | "accent" | "custom";
+    background: "primary" | "secondary" | "accent" | "custom" | "image";
     backgroundColor?: string;
+    backgroundImage?: string;
+    backgroundOverlay?: number;
+    borderRadius?: number;
+    borderWidth?: number;
+    borderColor?: string;
+    shadow?: "none" | "sm" | "md" | "lg" | "xl";
     children?: React.ReactNode;
+  };
+  FlexContainer: {
+    direction: "row" | "column";
+    gap: number;
+    justify: "start" | "center" | "end" | "between";
+    align: "start" | "center" | "end" | "stretch";
+    padding: number;
+    wrap: boolean;
   };
   Columns: {
     leftColumnWidth: number;
     gap: number;
     left?: React.ReactNode;
     right?: React.ReactNode;
+  };
+  Typography: {
+    text: string;
+    tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span" | "div";
+    size: number;
+    weight: "300" | "400" | "500" | "600" | "700" | "800";
+    align: "left" | "center" | "right" | "justify";
+    color: "primary" | "secondary" | "accent" | "custom";
+    customColor?: string;
+    italic: boolean;
+    uppercase: boolean;
+    letterSpacing: number;
+    lineHeight: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+    paddingLeft?: number;
+    paddingRight?: number;
+    marginTop?: number;
+    marginBottom?: number;
+    maxWidth?: number;
   };
   Heading: {
     text: string;
@@ -136,9 +194,37 @@ export type PuckConfig = {
     paddingTop?: number;
     paddingBottom?: number;
   };
+  Accordion: {
+    items: {
+      title: string;
+      content: string;
+    }[];
+    allowMultiple: boolean;
+  };
+  PricingTable: {
+    plans: {
+      name: string;
+      price: string;
+      period: string;
+      features: string[];
+      buttonLabel: string;
+      buttonUrl: string;
+      isFeatured: boolean;
+    }[];
+  };
+  IconBox: {
+    icon: keyof typeof IconMap;
+    title: string;
+    description: string;
+    iconPosition: "top" | "left";
+    iconSize: number;
+    iconColor: string;
+    align: "left" | "center" | "right";
+  };
   Contact: {
     title: string;
     description?: string;
+    buttonLabel?: string;
     width: "full" | "half";
     paddingTop?: number;
     paddingBottom?: number;
@@ -197,6 +283,13 @@ export type PuckConfig = {
     username: string;
     width: "full" | "half";
   };
+  ChatWidget: {
+    enabled: boolean;
+    persona?: string;
+    consultationPrice?: string;
+    hourlyRate?: string;
+    width: "full" | "half";
+  };
   HTMLEmbed: {
     html: string;
     height?: number;
@@ -216,7 +309,7 @@ export type PuckConfig = {
     paddingBottom?: number;
   };
   FeatureSection: {
-    imageOnLeft: boolean;
+    imageSide: "left" | "right";
     imageUrl: string;
     title: string;
     description: string;
@@ -226,7 +319,9 @@ export type PuckConfig = {
   };
 };
 
-export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
+export type PuckConfig = Config<PuckConfigProps, RootProps>;
+
+export const createConfig = (pages: any[] = []): PuckConfig => {
   const pageOptions = pages.map(p => ({ label: p.title || p.slug, value: p.slug }));
   
   const LinkField = {
@@ -298,16 +393,24 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     root: {
       fields: {
         title: { type: "text" },
+        description: { type: "textarea" },
+        ogImage: FirebaseImageField as any,
         primaryThemeColor: CustomColorField as any,
         typographyPairing: ConstrainedTypographyField as any,
       },
       defaultProps: {
         title: "Home",
+        description: "Professional architectural narratives and therapeutic spaces.",
         primaryThemeColor: "#2D4236",
         typographyPairing: "classic"
       },
-      render: ({ children, primaryThemeColor, typographyPairing }: any) => {
-        const { isLight, setIsLight } = useSiteContent();
+      render: ({ children, title, description, ogImage, primaryThemeColor, typographyPairing }: any) => {
+        const { isLight, setIsLight, settings } = useSiteContent();
+        
+        // Use page-level meta, fallback to site settings
+        const pageTitle = `${title} | ${settings.brandName || 'Therapy With Edward'}`;
+        const pageDesc = description || settings.tagline;
+        const pageOgImage = ogImage || settings.heroImage;
         
         let fontDisplay = "Playfair Display, serif";
         let fontBody = "Inter, sans-serif";
@@ -331,22 +434,15 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
 
         return (
           <div className="flex flex-col lg:flex-row min-h-screen items-stretch bg-bg-primary overflow-x-hidden" style={customStyle}>
-             {/* MOBILE SIDEBAR/TOP BAR */}
-             <aside className="lg:hidden w-full border-b border-border-subtle flex flex-col p-6 pt-24 bg-bg-primary/95 backdrop-blur-md sticky top-0 z-40">
-              <div className="flex flex-col gap-y-4">
-                <DropZone zone="side" />
-              </div>
-            </aside>
+            {/* RESPONSIVE SIDEBAR */}
+            <aside className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-border-subtle flex flex-col bg-bg-primary sticky lg:sticky top-0 z-40 h-auto lg:h-screen overflow-y-auto no-scrollbar">
 
-            {/* LEFT COLUMN: BRAND & SERVICES (Desktop) - Container stretches to full height of parent flex */}
-            <aside className="hidden lg:flex w-1/3 border-r border-border-subtle flex-col bg-bg-primary relative shrink-0">
-              {/* Sticky wrapper for content - keeps content in view while parent aside stretches full height */}
-              <div className="sticky top-0 h-screen flex flex-col p-8 md:p-12 lg:p-16 pt-32 lg:pt-12 overflow-y-auto no-scrollbar w-full">
-                <div className="flex flex-col gap-y-8">
+              <div className="flex flex-col p-6 pt-24 lg:p-12 lg:pt-12 xl:p-16 w-full">
+                <div className="flex flex-col gap-y-4 lg:gap-y-8">
                   <DropZone zone="side" />
                 </div>
                 
-                <div className="mt-auto pt-12 flex items-center gap-6">
+                <div className="hidden lg:flex mt-auto pt-12 items-center gap-6">
                   <button 
                     onClick={() => setIsLight(!isLight)}
                     className="text-text-primary/40 hover:text-brick-copper transition-colors p-2 hover:bg-white/5 rounded-full"
@@ -358,20 +454,376 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
               </div>
             </aside>
 
-            {/* RIGHT COLUMN: MAIN CONTENT */}
-            <main className="flex-1 relative flex flex-col min-h-full">
-              <div className="flex flex-col flex-1">
-                <DropZone zone="main" />
-                <div className="flex flex-col">
-                  {children}
-                </div>
-              </div>
+            {/* MAIN CONTENT AREA */}
+            <main className="flex-1 relative flex flex-col min-h-screen">
+              {children}
             </main>
           </div>
         );
       }
     },
     components: {
+      Typography: {
+        fields: {
+          text: { type: "text", contentEditable: true },
+          tag: {
+            type: "select",
+            options: [
+              { label: "H1", value: "h1" },
+              { label: "H2", value: "h2" },
+              { label: "H3", value: "h3" },
+              { label: "H4", value: "h4" },
+              { label: "H5", value: "h5" },
+              { label: "H6", value: "h6" },
+              { label: "Paragraph", value: "p" },
+              { label: "Span", value: "span" },
+              { label: "Div", value: "div" },
+            ]
+          },
+          size: { type: "number" },
+          weight: {
+            type: "select",
+            options: [
+              { label: "300 - Light", value: "300" },
+              { label: "400 - Regular", value: "400" },
+              { label: "500 - Medium", value: "500" },
+              { label: "600 - SemiBold", value: "600" },
+              { label: "700 - Bold", value: "700" },
+              { label: "800 - ExtraBold", value: "800" },
+            ]
+          },
+          align: {
+            type: "radio",
+            options: [
+              { label: "Left", value: "left" },
+              { label: "Center", value: "center" },
+              { label: "Right", value: "right" },
+              { label: "Justify", value: "justify" },
+            ]
+          },
+          color: {
+            type: "select",
+            options: [
+              { label: "Primary", value: "primary" },
+              { label: "Secondary", value: "secondary" },
+              { label: "Accent", value: "accent" },
+              { label: "Custom", value: "custom" },
+            ]
+          },
+          customColor: CustomColorField as any,
+          italic: { type: "radio", options: [{ label: "Yes", value: true }, { label: "No", value: false }] },
+          uppercase: { type: "radio", options: [{ label: "Yes", value: true }, { label: "No", value: false }] },
+          letterSpacing: { type: "number" },
+          lineHeight: { type: "number" },
+          paddingTop: PaddingField as any,
+          paddingBottom: PaddingField as any,
+          paddingLeft: PaddingField as any,
+          paddingRight: PaddingField as any,
+          marginTop: PaddingField as any,
+          marginBottom: PaddingField as any,
+          maxWidth: { type: "number" },
+        },
+        defaultProps: {
+          text: "Typography text goes here",
+          tag: "p",
+          size: 16,
+          weight: "400",
+          align: "left",
+          color: "primary",
+          italic: false,
+          uppercase: false,
+          letterSpacing: 0,
+          lineHeight: 1.5,
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          marginTop: 0,
+          marginBottom: 16,
+        },
+        render: (props) => {
+          const { 
+            text, tag: Tag = "p", size, weight, align, color, customColor, 
+            italic, uppercase, letterSpacing, lineHeight, 
+            paddingTop, paddingBottom, paddingLeft, paddingRight,
+            marginTop, marginBottom, maxWidth 
+          } = props;
+
+          const colorMap = {
+            primary: "var(--text-primary)",
+            secondary: "var(--text-primary)/60",
+            accent: "var(--color-accent)",
+            custom: customColor
+          };
+
+          const style: React.CSSProperties = {
+            fontSize: `${size}px`,
+            fontWeight: weight,
+            textAlign: align as any,
+            color: color === 'custom' ? customColor : (color === 'accent' ? 'var(--color-accent)' : (color === 'secondary' ? 'rgba(0,0,0,0.6)' : 'var(--text-primary)')),
+            fontStyle: italic ? 'italic' : 'normal',
+            textTransform: uppercase ? 'uppercase' : 'none',
+            letterSpacing: `${letterSpacing}px`,
+            lineHeight: lineHeight,
+            paddingTop: `${paddingTop}px`,
+            paddingBottom: `${paddingBottom}px`,
+            paddingLeft: `${paddingLeft}px`,
+            paddingRight: `${paddingRight}px`,
+            marginTop: `${marginTop}px`,
+            marginBottom: `${marginBottom}px`,
+            maxWidth: maxWidth ? `${maxWidth}px` : 'none',
+          };
+
+          return <Tag style={style}>{text}</Tag>;
+        }
+      },
+      FlexContainer: {
+        fields: {
+          direction: {
+            type: "radio",
+            options: [
+              { label: "Row", value: "row" },
+              { label: "Column", value: "column" },
+            ]
+          },
+          gap: { type: "number" },
+          justify: {
+            type: "select",
+            options: [
+              { label: "Start", value: "start" },
+              { label: "Center", value: "center" },
+              { label: "End", value: "end" },
+              { label: "Space Between", value: "between" },
+            ]
+          },
+          align: {
+            type: "select",
+            options: [
+              { label: "Start", value: "start" },
+              { label: "Center", value: "center" },
+              { label: "End", value: "end" },
+              { label: "Stretch", value: "stretch" },
+            ]
+          },
+          padding: PaddingField as any,
+          wrap: { type: "radio", options: [{ label: "Yes", value: true }, { label: "No", value: false }] },
+        },
+        defaultProps: {
+          direction: "column",
+          gap: 16,
+          justify: "start",
+          align: "stretch",
+          padding: 0,
+          wrap: false,
+        },
+        render: ({ direction, gap, justify, align, padding, wrap }) => {
+          const justifyClass = {
+            start: "justify-start",
+            center: "justify-center",
+            end: "justify-end",
+            between: "justify-between",
+          }[justify];
+
+          const alignClass = {
+            start: "items-start",
+            center: "items-center",
+            end: "items-end",
+            stretch: "items-stretch",
+          }[align];
+
+          return (
+            <div 
+              className={`flex ${direction === 'row' ? 'flex-row' : 'flex-col'} ${justifyClass} ${alignClass} ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}
+              style={{ gap: `${gap}px`, padding: `${padding}px` }}
+            >
+              <DropZone zone="children" />
+            </div>
+          );
+        }
+      },
+      Accordion: {
+        fields: {
+          allowMultiple: { type: "radio", options: [{ label: "Yes", value: true }, { label: "No", value: false }] },
+          items: {
+            type: "array",
+            arrayFields: {
+              title: { type: "text", contentEditable: true },
+              content: { type: "textarea", contentEditable: true },
+            }
+          }
+        },
+        defaultProps: {
+          allowMultiple: false,
+          items: [
+            { title: "What services do you offer?", content: "We offer high-fidelity architectural narratives and therapeutic spaces for growth." },
+            { title: "How can I start a project?", content: "You can use our inquiry form to reach out and schedule a consultation." }
+          ]
+        },
+        render: ({ items, allowMultiple }) => {
+          const [openIndices, setOpenIndices] = useState<number[]>([]);
+
+          const toggle = (idx: number) => {
+            if (openIndices.includes(idx)) {
+              setOpenIndices(openIndices.filter(i => i !== idx));
+            } else {
+              setOpenIndices(allowMultiple ? [...openIndices, idx] : [idx]);
+            }
+          };
+
+          return (
+            <div className="space-y-4 w-full">
+              {items.map((item, idx) => (
+                <div key={idx} className="border-b border-border-subtle overflow-hidden">
+                  <button 
+                    onClick={() => toggle(idx)}
+                    className="w-full flex items-center justify-between py-6 text-left group"
+                  >
+                    <span className="font-display italic text-lg lg:text-xl group-hover:text-brick-copper transition-colors">{item.title}</span>
+                    <motion.div
+                      animate={{ rotate: openIndices.includes(idx) ? 180 : 0 }}
+                      className="text-text-primary/30"
+                    >
+                      <ChevronDown size={20} />
+                    </motion.div>
+                  </button>
+                  <AnimatePresence>
+                    {openIndices.includes(idx) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pb-8 text-sm text-text-primary/60 max-w-2xl leading-relaxed whitespace-pre-wrap">
+                          {item.content}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          );
+        }
+      },
+      PricingTable: {
+        fields: {
+          plans: {
+            type: "array",
+            arrayFields: {
+              name: { type: "text" },
+              price: { type: "text" },
+              period: { type: "text" },
+              features: { type: "array", arrayFields: { item: { type: "text" } } as any },
+              buttonLabel: { type: "text" },
+              buttonUrl: { type: "text" },
+              isFeatured: { type: "radio", options: [{ label: "Yes", value: true }, { label: "No", value: false }] },
+            }
+          }
+        },
+        defaultProps: {
+          plans: [
+            { 
+              name: "Standard", price: "$150", period: "/session", 
+              features: ["Individual Consultation", "Resource Access", "Email Support"],
+              buttonLabel: "Get Started", buttonUrl: "/inquiry", isFeatured: false
+            },
+            { 
+              name: "Premium", price: "$250", period: "/session", 
+              features: ["Priority Scheduling", "Advanced Narrative Tools", "Personalized Roadmap", "Chat Support"],
+              buttonLabel: "Get Started", buttonUrl: "/inquiry", isFeatured: true
+            }
+          ]
+        },
+        render: ({ plans }) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+            {plans.map((plan, idx) => (
+              <div 
+                key={idx} 
+                className={`p-8 border flex flex-col transition-all duration-500 ${plan.isFeatured ? "border-brick-copper bg-text-primary/[0.03] scale-105 z-10" : "border-border-subtle"}`}
+              >
+                <div className="mb-8">
+                  <h3 className="text-[10px] uppercase tracking-widest text-text-primary/40 mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-display italic tracking-tight">{plan.price}</span>
+                    <span className="text-xs text-text-primary/40">{plan.period}</span>
+                  </div>
+                </div>
+                <div className="space-y-4 mb-10 flex-1">
+                  {(plan.features as any).map((feature: any, fIdx: number) => (
+                    <div key={fIdx} className="flex items-start gap-3">
+                      <div className="mt-1 text-brick-copper"><Check size={14} /></div>
+                      <span className="text-xs text-text-primary/60">{feature.item || feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link 
+                  to={plan.buttonUrl} 
+                  className={`w-full py-4 text-center text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${plan.isFeatured ? "bg-brick-copper text-charcoal hover:bg-white hover:text-charcoal" : "border border-border-subtle hover:border-brick-copper"}`}
+                >
+                  {plan.buttonLabel}
+                </Link>
+              </div>
+            ))}
+          </div>
+        )
+      },
+      IconBox: {
+        fields: {
+          icon: {
+            type: "select",
+            options: Object.keys(IconMap).map(k => ({ label: k, value: k }))
+          },
+          title: { type: "text", contentEditable: true },
+          description: { type: "textarea", contentEditable: true },
+          iconPosition: { type: "radio", options: [{ label: "Top", value: "top" }, { label: "Left", value: "left" }] },
+          iconSize: { type: "number" },
+          iconColor: CustomColorField as any,
+          align: {
+            type: "radio",
+            options: [
+              { label: "Left", value: "left" },
+              { label: "Center", value: "center" },
+              { label: "Right", value: "right" },
+            ]
+          }
+        },
+        defaultProps: {
+          icon: "Shield",
+          title: "Architecture of Mind",
+          description: "Nurturing spaces through thoughtful design.",
+          iconPosition: "top",
+          iconSize: 32,
+          iconColor: "#B85C38",
+          align: "left",
+        },
+        render: ({ icon, title, description, iconPosition, iconSize, iconColor, align }) => {
+          const IconComp = IconMap[icon] || Shield;
+          const alignClass = { left: "text-left items-start", center: "text-center items-center", right: "text-right items-end" }[align];
+          
+          if (iconPosition === 'top') {
+            return (
+              <div className={`flex flex-col ${alignClass} gap-4 p-4`}>
+                <div style={{ color: iconColor }}><IconComp size={iconSize} /></div>
+                <div>
+                  <h3 className="font-display italic text-2xl mb-2">{title}</h3>
+                  <p className="text-sm text-text-primary/60 leading-relaxed">{description}</p>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className={`flex gap-6 p-4 ${align === 'right' ? 'flex-row-reverse text-right' : 'text-left'}`}>
+              <div className="shrink-0" style={{ color: iconColor }}><IconComp size={iconSize} /></div>
+              <div>
+                <h3 className="font-display italic text-2xl mb-2">{title}</h3>
+                <p className="text-sm text-text-primary/60 leading-relaxed">{description}</p>
+              </div>
+            </div>
+          );
+        }
+      },
       Button: {
         fields: {
           link: LinkField as any,
@@ -413,61 +865,93 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
       },
       Section: {
         fields: {
-          children: { type: "slot" },
           paddingTop: PaddingField as any,
           paddingBottom: PaddingField as any,
           paddingX: PaddingField as any,
           background: {
             type: "select",
             options: [
-              { label: "White (Primary)", value: "primary" },
-              { label: "Off-White (Secondary)", value: "secondary" },
-              { label: "Charcoal (Accent)", value: "accent" },
+              { label: "Primary", value: "primary" },
+              { label: "Secondary", value: "secondary" },
+              { label: "Accent", value: "accent" },
               { label: "Custom Color", value: "custom" },
+              { label: "Image", value: "image" },
             ],
           },
-          backgroundColor: CustomColorField as any
+          backgroundColor: CustomColorField as any,
+          backgroundImage: FirebaseImageField as any,
+          backgroundOverlay: { type: "number", min: 0, max: 1 },
+          borderRadius: { type: "number" },
+          borderWidth: { type: "number" },
+          borderColor: CustomColorField as any,
+          shadow: {
+            type: "select",
+            options: [
+              { label: "None", value: "none" },
+              { label: "Small", value: "sm" },
+              { label: "Medium", value: "md" },
+              { label: "Large", value: "lg" },
+              { label: "Extra Large", value: "xl" },
+            ]
+          }
         },
         defaultProps: {
           paddingTop: 80,
           paddingBottom: 80,
           paddingX: 16,
           background: "primary",
+          backgroundOverlay: 0,
+          borderRadius: 0,
+          borderWidth: 0,
+          shadow: "none",
         },
-        render: ({ paddingTop, paddingBottom, paddingX, background = "primary", backgroundColor }) => {
+        render: ({ paddingTop, paddingBottom, paddingX, background = "primary", backgroundColor, backgroundImage, backgroundOverlay, borderRadius, borderWidth, borderColor, shadow }) => {
           const bgClass = {
             primary: "bg-bg-primary",
             secondary: "bg-bg-secondary",
             accent: "bg-charcoal text-white",
             custom: "",
+            image: "relative overflow-hidden"
           }[background] || "bg-bg-primary";
 
-          const pt = paddingTop ?? 80;
-          const pb = paddingBottom ?? 80;
-          const px = paddingX ?? 16;
+          const shadowClass = {
+            none: "",
+            sm: "shadow-sm",
+            md: "shadow-md",
+            lg: "shadow-lg",
+            xl: "shadow-xl"
+          }[shadow || "none"];
 
           const style: React.CSSProperties = { 
-            paddingTop: `${pt}px`, 
-            paddingBottom: `${pb}px`,
-            paddingLeft: `${px}px`,
-            paddingRight: `${px}px`
+            paddingTop: `${paddingTop}px`, 
+            paddingBottom: `${paddingBottom}px`,
+            paddingLeft: `${paddingX}px`,
+            paddingRight: `${paddingX}px`,
+            borderRadius: `${borderRadius}px`,
+            borderWidth: `${borderWidth}px`,
+            borderColor: borderColor,
+            borderStyle: borderWidth ? 'solid' : 'none'
           };
 
-          if (background === 'custom' && backgroundColor) {
-            style.backgroundColor = backgroundColor;
+          if (background === 'custom' && backgroundColor) style.backgroundColor = backgroundColor;
+          if (background === 'image' && backgroundImage) {
+            style.backgroundImage = `url(${backgroundImage})`;
+            style.backgroundSize = 'cover';
+            style.backgroundPosition = 'center';
           }
 
           return (
-            <section className={`${bgClass} transition-all duration-300`} style={style}>
-              <div className="max-w-7xl mx-auto"><DropZone zone="children" /></div>
+            <section className={`${bgClass} ${shadowClass} transition-all duration-300`} style={style}>
+              {background === 'image' && backgroundOverlay && (
+                <div className="absolute inset-0 bg-charcoal/60" style={{ opacity: backgroundOverlay }} />
+              )}
+              <div className="max-w-7xl mx-auto relative z-10"><DropZone zone="children" /></div>
             </section>
           );
         },
       },
     Columns: {
       fields: {
-        left: { type: "slot" },
-        right: { type: "slot" },
         leftColumnWidth: {
           type: "number",
           min: 10,
@@ -533,7 +1017,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         width: "full",
       },
       render: ({ text, level, align, accent, width, paddingTop, paddingBottom, paddingLeft, paddingRight }) => {
-        const Tag = (`h${level}` as any) || "h2";
+        const Tag = (level ? `h${level}` : "h2") as any;
         const alignClass = { left: "text-left", center: "text-center", right: "text-right" }[align];
         const sizeClass = {
           1: "text-5xl md:text-7xl",
@@ -792,7 +1276,8 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     Contact: {
       fields: {
         title: { type: "text", contentEditable: true },
-        description: { type: "text", contentEditable: true },
+        description: { type: "textarea", contentEditable: true },
+        buttonLabel: { type: "text" },
         width: WidthField as any,
         paddingTop: PaddingField as any,
         paddingBottom: PaddingField as any,
@@ -800,14 +1285,15 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
       defaultProps: {
         title: "GET IN TOUCH",
         description: "Let's discuss your next project",
+        buttonLabel: "Request Quote",
         width: "full",
         paddingTop: 32,
         paddingBottom: 32,
       },
-      render: ({ title, width, paddingTop, paddingBottom }) => (
+      render: ({ title, description, buttonLabel, width, paddingTop, paddingBottom }) => (
         <ComponentWrapper width={width}>
           <div style={{ paddingTop: `${paddingTop ?? 32}px`, paddingBottom: `${paddingBottom ?? 32}px` }}>
-            <BookingForm override={{ title }} />
+            <BookingForm override={{ title, description, buttonLabel }} />
           </div>
         </ComponentWrapper>
       ),
@@ -878,7 +1364,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     PropertyHighlight: {
       fields: {
-        mediaUrl: { type: "text" },
+        mediaUrl: FirebaseImageField as any,
         mediaType: { 
           type: "select", 
           options: [{label: "Image", value: "image"}, {label: "Video", value: "video"}] 
@@ -945,7 +1431,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         logos: {
           type: "array",
           arrayFields: {
-            url: { type: "text" },
+            url: FirebaseImageField as any,
             alt: { type: "text" },
           },
         },
@@ -977,9 +1463,46 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         </ComponentWrapper>
       ),
     },
+    ChatWidget: {
+      fields: {
+        enabled: { type: "radio", options: [{label: "On", value: true}, {label: "Off", value: false}] },
+        persona: { type: "textarea" },
+        consultationPrice: { type: "text" },
+        hourlyRate: { type: "text" },
+        width: WidthField as any,
+      },
+      defaultProps: {
+        enabled: true,
+        width: "full"
+      },
+      render: ({ enabled, persona, consultationPrice, hourlyRate, width }) => (
+        <ComponentWrapper width={width}>
+          <div className="flex flex-col items-center p-8 bg-brick-copper/5 border border-brick-copper/20 rounded-lg">
+             <MessageSquare className="text-brick-copper mb-4" size={32} />
+             <h4 className="text-[10px] uppercase tracking-widest font-bold mb-2">Chatbot Configuration</h4>
+             <p className="text-[11px] text-text-primary/60 italic text-center">
+               {enabled ? "Personalized AI Assistant is active on this page." : "Chatbot is disabled for this narrative space."}
+             </p>
+             {enabled && (
+               <ChatWidget 
+                 overrideSettings={{ 
+                   chatbotEnabled: true, 
+                   chatbotPersona: persona,
+                   chatbotPricing: {
+                     consultation: consultationPrice || "",
+                     hourly_rate: hourlyRate || "",
+                     sliding_scale: true
+                   }
+                 }} 
+               />
+             )}
+          </div>
+        </ComponentWrapper>
+      )
+    },
     MediaEmbed: {
       fields: {
-        url: { type: "text" },
+        url: FirebaseImageField as any,
         mediaType: { 
           type: "select", 
           options: [{label: "Image", value: "image"}, {label: "Video", value: "video"}] 
@@ -1085,11 +1608,11 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
     },
     FeatureSection: {
       fields: {
-        imageOnLeft: {
+        imageSide: {
           type: "radio",
           options: [
-            { label: "Image on Left", value: true },
-            { label: "Image on Right", value: false }
+            { label: "Image on Left", value: "left" },
+            { label: "Image on Right", value: "right" }
           ]
         },
         imageUrl: FirebaseImageField as any,
@@ -1100,7 +1623,7 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         paddingBottom: PaddingField as any,
       },
       defaultProps: {
-        imageOnLeft: true,
+        imageSide: "left",
         imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800",
         title: "Stunning Architecture",
         description: "Experience modern living with bespoke design.",
@@ -1108,10 +1631,10 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
         paddingTop: 64,
         paddingBottom: 64,
       },
-      render: ({ imageOnLeft, imageUrl, title, description, backgroundColor, paddingTop, paddingBottom }) => {
+      render: ({ imageSide, imageUrl, title, description, backgroundColor, paddingTop, paddingBottom }) => {
         return (
           <div style={{ backgroundColor, paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }}>
-            <div className={`max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-8 items-center ${imageOnLeft ? "" : "md:flex-row-reverse"}`}>
+            <div className={`max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-8 items-center ${imageSide === "left" ? "" : "md:flex-row-reverse"}`}>
               <div className="w-full md:w-1/2">
                 <img src={imageUrl} alt="Feature visual" className="w-full aspect-[4/3] object-cover rounded-lg shadow-lg" />
               </div>
@@ -1129,7 +1652,24 @@ export const createConfig = (pages: any[] = []): Config<PuckConfig> => {
 };
 
 export const BASELINE_LAYOUT = {
-  content: [],
+  content: [
+    {
+      type: "Hero",
+      props: { id: "hero-1" }
+    },
+    {
+      type: "Portfolio",
+      props: { id: "portfolio-main", panel: "main" }
+    },
+    {
+      type: "Contact",
+      props: { id: "contact-1" }
+    },
+    {
+      type: "Footer",
+      props: { id: "footer-1" }
+    }
+  ],
   zones: {
     side: [
       {
@@ -1149,24 +1689,6 @@ export const BASELINE_LAYOUT = {
       {
         type: "Portfolio",
         props: { id: "portfolio-side", panel: "side" }
-      }
-    ],
-    main: [
-      {
-        type: "Hero",
-        props: { id: "hero-1" }
-      },
-      {
-        type: "Portfolio",
-        props: { id: "portfolio-main", panel: "main" }
-      },
-      {
-        type: "Contact",
-        props: { id: "contact-1" }
-      },
-      {
-        type: "Footer",
-        props: { id: "footer-1" }
       }
     ]
   },

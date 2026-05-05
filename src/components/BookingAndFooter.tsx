@@ -19,7 +19,7 @@ const platformIcons: Record<string, any> = {
   facebook: Facebook
 };
 
-export const BookingForm = ({ override }: { override?: { title: string } }) => {
+export const BookingForm = ({ override }: { override?: { title?: string, description?: string, buttonLabel?: string } }) => {
   const { isEditMode, settings } = useSiteContent();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -76,13 +76,21 @@ export const BookingForm = ({ override }: { override?: { title: string } }) => {
 
   return (
     <div id="inquire" className="w-full pb-12 lg:pb-0">
-      <h3 className={`text-[10px] uppercase tracking-[0.3em] text-brick-copper mb-8 outline-none ${isEditMode ? 'focus:ring-1 focus:ring-brick-copper/50 rounded px-1' : ''}`}
-        contentEditable={isEditMode}
-        suppressContentEditableWarning
-        onBlur={(e) => saveInquiryTitle(e.currentTarget.textContent || 'Inquiry')}
-      >
-        {override?.title || settings.inquiryTitle || 'Inquiry'}
-      </h3>
+      {isEditMode ? (
+        <input
+          className="text-[10px] uppercase tracking-[0.3em] text-brick-copper mb-2 bg-transparent border-b border-brick-copper outline-none w-full"
+          value={override?.title || settings.inquiryTitle || ''}
+          onChange={(e) => saveInquiryTitle(e.target.value)}
+          placeholder="Inquiry Title"
+        />
+      ) : (
+        <h3 className="text-[10px] uppercase tracking-[0.3em] text-brick-copper mb-2">
+          {override?.title || settings.inquiryTitle || 'Inquiry'}
+        </h3>
+      )}
+      {override?.description && (
+        <p className="text-[11px] text-text-primary/60 mb-8 italic">{override.description}</p>
+      )}
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="border-b border-border-subtle pb-2">
           <label className="block text-[9px] uppercase tracking-widest text-text-primary/70 mb-1">Reason for Inquiry</label>
@@ -122,7 +130,7 @@ export const BookingForm = ({ override }: { override?: { title: string } }) => {
              disabled={loading}
              className="flex-1 bg-brick-copper/90 text-bg-primary font-semibold text-[10px] uppercase tracking-widest py-4 transition-all duration-300 hover:bg-white hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 shadow-sm hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-brick-copper/90"
            >
-             {loading ? 'Transmitting...' : 'Request Quote'}
+             {loading ? 'Transmitting...' : (override?.buttonLabel || 'Request Quote')}
            </button>
         </div>
       </form>
@@ -147,16 +155,22 @@ export const FooterContent = ({ override }: { override?: { quote: string } }) =>
   return (
     <div className="w-full flex flex-col pt-12 lg:pt-0 pb-12 lg:pb-0 px-4 md:px-8">
       <div className="space-y-6">
-        <motion.p 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          className={`font-display text-2xl lg:text-3xl leading-snug italic text-text-primary/90 font-light outline-none ${isEditMode ? 'focus:ring-1 focus:ring-brick-copper/50 rounded px-1' : ''}`}
-          contentEditable={isEditMode}
-          suppressContentEditableWarning
-          onBlur={(e) => saveFooterQuote(e.currentTarget.textContent || '')}
-        >
-          &ldquo;{override?.quote || settings.footerQuote}&rdquo;
-        </motion.p>
+        {isEditMode ? (
+          <textarea
+            className="font-display text-2xl lg:text-3xl leading-snug italic text-text-primary/90 font-light bg-transparent border-b border-brick-copper outline-none w-full resize-none"
+            value={override?.quote || settings.footerQuote || ''}
+            onChange={(e) => saveFooterQuote(e.target.value)}
+            rows={3}
+          />
+        ) : (
+          <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="font-display text-2xl lg:text-3xl leading-snug italic text-text-primary/90 font-light"
+          >
+            &ldquo;{override?.quote || settings.footerQuote}&rdquo;
+          </motion.p>
+        )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 pt-12 border-t border-border-subtle/30">
           <div className="space-y-6">

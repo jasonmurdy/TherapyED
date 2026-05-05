@@ -109,7 +109,7 @@ const SortablePortfolioItem = ({
       {/* Category Tag (Grid Mode) */}
       {!isGallery && (
         <div className="absolute bottom-4 left-4 z-10 transition-transform group-hover:-translate-y-1">
-           <span className="text-[10px] uppercase tracking-widest bg-charcoal px-3 py-1.5 border border-border-subtle group-hover:border-brick-copper group-hover:text-brick-copper transition-all font-bold shadow-2xl">
+           <span className="text-[10px] uppercase tracking-widest bg-bg-primary px-3 py-1.5 border border-border-subtle group-hover:border-brick-copper group-hover:text-brick-copper transition-all font-bold shadow-2xl">
              {index + 1 < 10 ? `0${index + 1}` : index + 1} / {item.category}
            </span>
         </div>
@@ -117,7 +117,7 @@ const SortablePortfolioItem = ({
 
       {/* Grid Hover State */}
       {!isGallery && !isEditMode && (
-        <div className="absolute inset-0 bg-charcoal/98 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-8 text-center pointer-events-none">
+        <div className="absolute inset-0 bg-bg-primary/95 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-8 text-center pointer-events-none">
             <span className="text-[11px] uppercase tracking-[0.6em] font-black text-brick-copper mb-5 drop-shadow-2xl border-b-2 border-brick-copper/40 pb-2">
               Clinical Insight
             </span>
@@ -195,7 +195,7 @@ const SortablePortfolioItem = ({
       ref={setNodeRef} 
       style={style}
       whileTap={isClickable ? { scale: 0.985 } : {}}
-      className={`relative overflow-hidden group ${isSpacer ? 'bg-transparent' : 'bg-stone-900 border border-border-subtle'} ${isClickable ? 'cursor-pointer' : ''} hover:border-brick-copper/80 hover:shadow-[0_0_30px_rgba(184,115,51,0.15)] transition-all duration-500 rounded-sm ${
+      className={`relative overflow-hidden group ${isSpacer ? 'bg-transparent' : 'bg-bg-primary/5 border border-border-subtle'} ${isClickable ? 'cursor-pointer' : ''} hover:border-brick-copper/80 hover:shadow-[0_0_30px_rgba(184,115,51,0.15)] transition-all duration-500 rounded-sm ${
         !isGallery ? `${colSpanClasses[colSpan] || 'sm:col-span-1'} ${rowSpanClasses[rowSpan] || 'sm:row-span-1'}` : ''
       } ${isGallery ? 'aspect-[4/5]' : 'aspect-square md:aspect-auto'}`}
     >

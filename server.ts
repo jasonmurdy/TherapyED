@@ -24,13 +24,12 @@ async function startServer() {
 
   // 2. Security & Trust Headers (SEO boost)
   app.use((req, res, next) => {
-    // Canonical Domain Redirect (Ensures exposedbrickmedia.ca is the primary URL)
+    // Canonical Domain Redirect (Optional: Only if configured)
     const host = req.get("host") || "";
-    const forwardedHost = req.get("x-forwarded-host") || "";
-    const isRunApp = host.includes(".run.app") || forwardedHost.includes(".run.app");
+    const canonicalHost = process.env.CANONICAL_HOST;
     
-    if (process.env.NODE_ENV === "production" && isRunApp && !req.path.startsWith("/api/health")) {
-      return res.redirect(301, `https://exposedbrickmedia.ca${req.originalUrl}`);
+    if (process.env.NODE_ENV === "production" && canonicalHost && host !== canonicalHost && !host.includes(".run.app")) {
+      return res.redirect(301, `https://${canonicalHost}${req.originalUrl}`);
     }
 
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -75,8 +74,12 @@ async function startServer() {
         return res.status(400).json({ error: "MLS Number is required" });
       }
 
-      const clientId = process.env.DDF_CLIENT_ID || "jsO4iysHFBpmMamciyq3v3bs";
-      const clientSecret = process.env.DDF_CLIENT_SECRET || "DJyn2N83zaU8TWiNtSAuotKn";
+      const clientId = process.env.DDF_CLIENT_ID;
+      const clientSecret = process.env.DDF_CLIENT_SECRET;
+
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: "DDF API credentials not configured" });
+      }
 
       const now = Date.now();
 

@@ -13,6 +13,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete, path, 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,38 +75,72 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete, path, 
     );
   };
 
+  const handleUrlSubmit = () => {
+    if (urlInput.trim()) {
+      onUploadComplete(urlInput.trim());
+      setUrlInput('');
+    }
+  };
+
   return (
-    <div className="space-y-2">
-      <label className="text-[10px] uppercase tracking-widest text-white/30 block">{label}</label>
-      <div 
-        onClick={() => !uploading && fileInputRef.current?.click()}
-        className={`relative border border-dashed border-white/10 p-4 flex flex-col items-center justify-center cursor-pointer hover:border-brick-copper/50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          className="hidden" 
-          accept="image/*"
-        />
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-[10px] uppercase tracking-widest text-white/30 block">{label}</label>
         
-        {uploading ? (
-          <div className="flex flex-col items-center">
-            <Loader2 className="w-5 h-5 text-brick-copper animate-spin mb-2" />
-            <span className="text-[10px] font-mono text-white/40">{Math.round(progress)}%</span>
-            <div className="w-24 h-1 bg-white/5 mt-2 overflow-hidden">
-              <div 
-                className="h-full bg-brick-copper transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+        <div className="flex gap-2 mb-2">
+          <input 
+            type="text" 
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="Paste image URL here..."
+            className="flex-1 bg-white/5 border border-white/10 px-3 py-2 text-[10px] text-white/60 focus:border-brick-copper outline-none transition-colors font-mono"
+          />
+          <button 
+            onClick={handleUrlSubmit}
+            disabled={!urlInput.trim()}
+            className="px-3 py-2 bg-white/5 border border-white/10 text-[9px] uppercase tracking-widest text-white/40 hover:text-white hover:bg-brick-copper hover:text-charcoal transition-all disabled:opacity-30 font-bold"
+          >
+            Apply URL
+          </button>
+        </div>
+
+        <div className="relative flex items-center my-4">
+          <div className="w-full border-t border-white/5" />
+          <div className="absolute left-1/2 -translate-x-1/2 bg-charcoal px-2 text-[8px] text-white/20 uppercase tracking-widest">
+            Or upload
           </div>
-        ) : (
-          <>
-            <Upload className="w-5 h-5 text-white/20 mb-2" />
-            <span className="text-[10px] text-white/40 uppercase tracking-tighter">Click to Upload</span>
-          </>
-        )}
+        </div>
+
+        <div 
+          onClick={() => !uploading && fileInputRef.current?.click()}
+          className={`relative border border-dashed border-white/10 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-brick-copper/50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            accept="image/*"
+          />
+          
+          {uploading ? (
+            <div className="flex flex-col items-center">
+              <Loader2 className="w-5 h-5 text-brick-copper animate-spin mb-2" />
+              <span className="text-[10px] font-mono text-white/40">{Math.round(progress)}%</span>
+              <div className="w-24 h-1 bg-white/5 mt-2 overflow-hidden">
+                <div 
+                  className="h-full bg-brick-copper transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <Upload className="w-5 h-5 text-white/20 mb-2" />
+              <span className="text-[10px] text-white/40 uppercase tracking-tighter">Choose File or Drag & Drop</span>
+            </>
+          )}
+        </div>
       </div>
       {error && <p className="text-[10px] text-red-500 font-mono mt-1">{error}</p>}
     </div>

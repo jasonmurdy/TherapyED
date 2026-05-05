@@ -169,13 +169,18 @@ export const Navbar = ({ theme, onThemeToggle }: { theme: 'light' | 'dark', onTh
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-12 py-8 hidden lg:flex justify-between items-center bg-bg-primary/50 backdrop-blur-sm">
       <Link to="/" className="group flex items-center italic">
-        <span className="font-display text-2xl text-text-primary outline-none focus:ring-1 focus:ring-brick-copper/50 rounded px-1"
-          contentEditable={isEditMode}
-          suppressContentEditableWarning
-          onBlur={(e) => saveBrandName(e.currentTarget.textContent || 'Therapy With Edward')}
-        >
-          {settings.brandName || 'Therapy With Edward'}
-        </span>
+        {isEditMode ? (
+          <input
+            className="font-display text-2xl text-text-primary bg-transparent border-b border-brick-copper outline-none px-1"
+            value={settings.brandName || ''}
+            onChange={(e) => saveBrandName(e.target.value)}
+            placeholder="Brand Name"
+          />
+        ) : (
+          <span className="font-display text-2xl text-text-primary rounded px-1">
+            {settings.brandName || 'Therapy With Edward'}
+          </span>
+        )}
       </Link>
 
       <div className="flex items-center gap-10">
@@ -278,14 +283,17 @@ export const MobileNavbar = ({ theme, onThemeToggle }: { theme: 'light' | 'dark'
         </div>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            key="mobile-nav-overlay"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[55] bg-bg-primary pt-24 px-8 overflow-y-auto"
           >
+
             <div className="flex flex-col gap-8 py-12">
               <Link to="/about" onClick={closeMenu} className={`text-2xl font-display italic ${location.pathname === '/about' ? 'text-brick-copper' : 'text-text-primary/60'}`}>About</Link>
               <Link to="/services" onClick={closeMenu} className={`text-2xl font-display italic ${location.pathname === '/services' ? 'text-brick-copper' : 'text-text-primary/60'}`}>Modalities</Link>

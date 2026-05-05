@@ -394,22 +394,35 @@ export const AdminDashboard = ({ onClose }: { onClose: () => void }) => {
 
   const logAction = async (action: string, details: any) => {
     try {
-      // Deep clone and clean to avoid circular structures in JSON.stringify
-      const sanitizedDetails = JSON.parse(JSON.stringify(details, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-          if (key === 'layout') return '[Layout Data]'; // Avoid logging huge layouts twice
+      // Robust circular reference detection for logging
+      const getCircularReplacer = () => {
+        const seen = new WeakSet();
+        return (key: string, value: any) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return "[Circular]";
+            }
+            seen.add(value);
+            if (key === 'layout') return '[Layout Data]'; // Avoid logging huge layouts
+          }
           return value;
-        }
-        return value;
-      }));
+        };
+      };
+
+      const sanitizedDetailsText = JSON.stringify(details, getCircularReplacer());
+      const sanitizedDetails = JSON.parse(sanitizedDetailsText);
 
       await fetch('/api/admin/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, details: sanitizedDetails, user: user.email })
+        body: JSON.stringify({ 
+          action, 
+          details: sanitizedDetails, 
+          user: user?.email || 'unknown' 
+        })
       });
     } catch (err) {
-      console.error('Failed to log action:', err);
+      console.warn('Failed to log action (circularity or size):', err);
     }
   };
 
@@ -1419,7 +1432,7 @@ export const AdminDashboard = ({ onClose }: { onClose: () => void }) => {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                <div className="lg:col-span-1 space-y-6">
-                  <div className="bg-white/[0.02] border border-white/5 p-6 space-y-4">
+                  <div className="bg-white/[0.02] border border-white/5 p-6 space-y-4 h-full">
                     <h4 className="text-[10px] uppercase tracking-widest text-white/60">Section Context</h4>
                     <div className="space-y-4">
                       <div>

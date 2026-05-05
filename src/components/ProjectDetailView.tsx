@@ -38,7 +38,7 @@ export const ProjectDetailView = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-bg-primary">
          <div className="w-12 h-12 border-2 border-brick-copper border-t-transparent rounded-full animate-spin"></div>
-         <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/40">Synchronizing Archive...</p>
+         <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-text-primary/40">Synchronizing Archive...</p>
       </div>
     );
   }
@@ -47,8 +47,8 @@ export const ProjectDetailView = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-bg-primary">
         <h2 className="font-display text-4xl mb-4 italic">Entry Lost</h2>
-        <p className="text-white/40 mb-8 max-w-md">This architectural narrative cannot be retrieved from the matrix.</p>
-        <Link to="/" className="text-brick-copper uppercase tracking-widest text-[10px] border border-brick-copper/30 px-8 py-3 hover:bg-brick-copper hover:text-charcoal transition-all">Return to Home</Link>
+        <p className="text-text-primary/40 mb-8 max-w-md">This architectural narrative cannot be retrieved from the matrix.</p>
+        <Link to="/" className="text-brick-copper uppercase tracking-widest text-[10px] border border-brick-copper/30 px-8 py-3 hover:bg-brick-copper hover:text-bg-primary transition-all">Return to Home</Link>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export const ProjectDetailView = () => {
           <span>/</span>
           <span className="text-text-primary font-medium">{project.category}</span>
           <span>/</span>
-          <span className="text-white/30 truncate max-w-[150px]">{project.title}</span>
+          <span className="text-text-primary/30 truncate max-w-[150px]">{project.title}</span>
         </div>
         <div className="flex gap-4">
            {project.url && (
@@ -88,7 +88,7 @@ export const ProjectDetailView = () => {
                    action: 'view'
                  });
                }}
-               className="text-[10px] uppercase tracking-widest text-brick-copper hover:text-white transition-colors flex items-center gap-2"
+               className="text-[10px] uppercase tracking-widest text-brick-copper hover:text-text-primary transition-colors flex items-center gap-2"
              >
                View Source Listing <ExternalLink size={12} />
              </a>
@@ -114,7 +114,7 @@ export const ProjectDetailView = () => {
                  </span>
                )}
                {project.listPrice && (
-                 <span className="text-xl font-display italic text-white/90">
+                 <span className="text-xl font-display italic text-text-primary/90">
                    {project.listPrice}
                  </span>
                )}
@@ -152,7 +152,7 @@ export const ProjectDetailView = () => {
             transition={{ delay: 0.6 }}
             className="space-y-6 pt-8 border-t border-white/5"
           >
-            <h4 className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">Architectural Narrative</h4>
+            <h4 className="text-[10px] uppercase tracking-[0.3em] font-bold text-text-primary/40">Architectural Narrative</h4>
             <div className="prose prose-invert prose-p:text-text-primary/70 prose-p:leading-relaxed prose-p:text-lg max-w-none">
               <p>{project.description || 'A masterpiece of contemporary architecture, defined by precision, light, and materiality.'}</p>
             </div>
@@ -189,17 +189,17 @@ export const ProjectDetailView = () => {
                      action: 'view'
                    });
                  }}
-                 className="w-full py-5 border border-white/10 text-white uppercase tracking-[0.2em] font-bold text-[10px] hover:bg-white hover:text-charcoal transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                 className="w-full py-5 border border-border-subtle text-text-primary uppercase tracking-[0.2em] font-bold text-[10px] hover:bg-text-primary hover:text-bg-primary transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                >
                  View Full Listing <ExternalLink size={12} />
                </a>
              )}
-             <p className="mt-4 text-[9px] text-white/20 text-center uppercase tracking-widest">Confidential technical dossiers available upon request.</p>
+             <p className="mt-4 text-[9px] text-text-primary/20 text-center uppercase tracking-widest">Confidential technical dossiers available upon request.</p>
           </motion.div>
         </div>
 
         {/* Right: Immersive Image Gallery */}
-        <div className="w-full lg:w-3/5 bg-charcoal relative lg:h-[calc(100vh-69px)] overflow-hidden">
+        <div className="w-full lg:w-3/5 bg-bg-primary/5 relative lg:h-[calc(100vh-69px)] overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div 
               key={activeImage}
@@ -243,13 +243,13 @@ export const ProjectDetailView = () => {
 
           <div className="absolute top-12 right-12 z-10">
              <div className="bg-bg-primary/50 backdrop-blur-md p-4 border border-white/5 flex flex-col gap-1 items-end">
-                <span className="text-[10px] uppercase tracking-widest text-white/40">Visual Chronology</span>
+                <span className="text-[10px] uppercase tracking-widest text-text-primary/40">Visual Chronology</span>
                 <span className="text-xl font-display text-brick-copper italic">{allImages.indexOf(activeImage || '') + 1} / {allImages.length}</span>
              </div>
           </div>
           
           {project.mlsNumber?.startsWith('REALTOR.ca') || true && (
-             <div className="absolute bottom-8 right-8 text-[8px] text-white/20 italic tracking-widest">
+             <div className="absolute bottom-8 right-8 text-[8px] text-text-primary/20 italic tracking-widest">
                Powered by Canadian Real Estate Association Technology
              </div>
           )}

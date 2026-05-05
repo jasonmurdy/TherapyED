@@ -24,8 +24,20 @@ interface Message {
   createTime: any;
 }
 
-export const ChatWidget = () => {
-  const { settings } = useSiteContent();
+interface ChatSettings {
+  chatbotEnabled?: boolean;
+  chatbotPersona?: string;
+  chatbotPricing?: {
+    consultation: string;
+    hourly_rate: string;
+    sliding_scale: boolean;
+  };
+}
+
+export const ChatWidget = ({ overrideSettings }: { overrideSettings?: ChatSettings }) => {
+  const { settings: globalSettings } = useSiteContent();
+  const settings = overrideSettings ? { ...globalSettings, ...overrideSettings } : globalSettings;
+  
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

@@ -48,6 +48,19 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     console.error("Please check your Firebase configuration.");
   }
   
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // Safe stringify for error reporting
+  const safeStringify = (obj: any) => {
+    const cache = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) return '[Circular]';
+        cache.add(value);
+      }
+      return value;
+    });
+  };
+
+  const errString = safeStringify(errInfo);
+  console.error('Firestore Error: ', errString);
+  throw new Error(errString);
 }

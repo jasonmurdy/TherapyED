@@ -6,9 +6,9 @@ import { Loader2 } from 'lucide-react';
 export const LogoCloud = ({ logos }: { logos: { url: string, alt: string }[] }) => {
   if (!logos || logos.length === 0) return null;
   return (
-    <div className="w-full py-16 border-y border-white/5 bg-charcoal">
+    <div className="w-full py-16 border-y border-border-subtle bg-bg-primary/5">
       <div className="max-w-5xl mx-auto px-8">
-        <p className="text-center text-[9px] uppercase tracking-[0.4em] text-white/40 mb-12">Trusted by the industry's vanguard</p>
+        <p className="text-center text-[9px] uppercase tracking-[0.4em] text-text-primary/40 mb-12">Trusted by the industry's vanguard</p>
         <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-60">
           {logos.map((logo, idx) => (
             logo.url ? (
@@ -100,8 +100,8 @@ export const InstagramFeed = ({ username = 'exposedbrickmedia' }: { username?: s
               loading="lazy"
               decoding="async"
             />
-            <div className="absolute inset-0 bg-charcoal/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-white border-b border-white pb-1">View Profile</span>
+            <div className="absolute inset-0 bg-bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-text-primary border-b border-text-primary pb-1">View Profile</span>
             </div>
           </a>
         ))}
@@ -117,8 +117,8 @@ export const InstagramFeed = ({ username = 'exposedbrickmedia' }: { username?: s
               loading="lazy"
               decoding="async"
             />
-            <div className="absolute inset-0 bg-charcoal/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-white border-b border-white pb-1">View Post</span>
+            <div className="absolute inset-0 bg-bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-text-primary border-b border-text-primary pb-1">View Post</span>
             </div>
           </a>
         ))}
